@@ -435,43 +435,42 @@ ul {
 .product-features {
   display: flex;
   flex-direction: column;
+  align-items: center; /* 🔥 centraliza os cards */
   gap: 14px;
 }
-
-/* editei espaçamento */
 
 .product-feature-card {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 10px;
 
   background: #ffffff;
-  border-radius: 16px;
-  padding: 18px 16px;
+  border-radius: 14px;
+  padding: 14px;
 
   border: 1px solid #e6ecf2;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
 
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-
-  margin-bottom: 16px;
+  max-width: 320px; /* 🔥 controla tamanho */
+  width: 100%;
 }
 
 .feature-icon {
-  font-size: 26px;
+  font-size: 20px; /* 🔥 menor e proporcional */
   flex-shrink: 0;
 }
 
 .product-feature-card h4 {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: #1A1A1A;
   margin-bottom: 4px;
 }
 
 .product-feature-card p {
-  font-size: 13px;
+  font-size: 12.5px;
   color: #555;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 /* ============================================
