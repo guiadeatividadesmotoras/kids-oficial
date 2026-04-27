@@ -1,164 +1,198 @@
-/* =============================================
-   GUIA DE ATIVIDADES MOTORAS
-   JavaScript Principal — Interações & Contador
-   ============================================= */
+/* ============================================
+   MAIN.JS — Landing Page Guia de Atividades Motoras
+   ============================================ */
 
-(function () {
-  'use strict';
+'use strict';
 
-  /* ── 1. CONTADOR DE PESSOAS ONLINE ─────────── */
-  const countEl = document.getElementById('online-count');
+/* ============================================
+   1. CONTADOR DE PESSOAS ONLINE
+   ============================================ */
+(function initOnlineCounter() {
+  const el = document.getElementById('onlineCount');
+  if (!el) return;
 
-  function getRandomCount() {
-    // Retorna número entre 9 e 27 com tendência para 12–22 (mais realista)
-    const base = Math.floor(Math.random() * 19) + 9; // 9..27
-    return base;
-  }
-
-  function animateCount(from, to, duration) {
-    if (!countEl) return;
-    const start = performance.now();
-    const diff = to - from;
-
-    function update(now) {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      // Easing suave
-      const eased = progress < 0.5
-        ? 2 * progress * progress
-        : -1 + (4 - 2 * progress) * progress;
-
-      countEl.textContent = Math.round(from + diff * eased);
-
-      if (progress < 1) {
-        requestAnimationFrame(update);
-      }
-    }
-
-    requestAnimationFrame(update);
-  }
-
-  let currentCount = getRandomCount();
-  if (countEl) countEl.textContent = currentCount;
-
-  // Atualiza a cada 15 segundos
-  setInterval(function () {
-    let newCount;
-    // Evitar mudança muito grande (parecer mais natural)
+  // Gera número aleatório entre min e max, evitando repetir o mesmo
+  function randomBetween(min, max, avoid) {
+    let n;
     do {
-      newCount = getRandomCount();
-    } while (Math.abs(newCount - currentCount) > 7);
+      n = Math.floor(Math.random() * (max - min + 1)) + min;
+    } while (n === avoid);
+    return n;
+  }
 
-    animateCount(currentCount, newCount, 1200); // 1.2s de transição
-    currentCount = newCount;
+  let current = randomBetween(9, 27, -1);
+  el.textContent = current;
+
+  // Atualiza a cada 15 segundos com transição suave
+  setInterval(function () {
+    const next = randomBetween(9, 27, current);
+    current = next;
+
+    // Fade out → update → fade in
+    el.style.transition = 'opacity 0.6s ease';
+    el.style.opacity = '0';
+
+    setTimeout(function () {
+      el.textContent = current;
+      el.style.opacity = '1';
+    }, 600);
   }, 15000);
+})();
 
 
-  /* ── 2. FAQ — ACESSIBILIDADE (TECLADO) ──────── */
-  const faqItems = document.querySelectorAll('.faq-item');
+/* ============================================
+   2. FAQ — ACORDEÃO
+   ============================================ */
+(function initFaq() {
+  const items = document.querySelectorAll('.faq-item');
 
-  faqItems.forEach(function (item) {
-    const summary = item.querySelector('.faq-question');
-    if (summary) {
-      summary.setAttribute('tabindex', '0');
-    }
-  });
+  items.forEach(function (item) {
+    const btn    = item.querySelector('.faq-question');
+    const answer = item.querySelector('.faq-answer');
 
+    if (!btn || !answer) return;
 
-  /* ── 3. SMOOTH SCROLL PARA ÂNCORAS ──────────── */
-  document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
-    anchor.addEventListener('click', function (e) {
-      const targetId = this.getAttribute('href');
-      const targetEl = document.querySelector(targetId);
-      if (!targetEl) return;
-      e.preventDefault();
-      const barHeight = document.getElementById('social-proof-bar')
-        ? document.getElementById('social-proof-bar').offsetHeight
-        : 44;
-      const offsetTop = targetEl.getBoundingClientRect().top + window.scrollY - barHeight - 12;
-      window.scrollTo({ top: offsetTop, behavior: 'smooth' });
-    });
-  });
-
-
-  /* ── 4. BOTÕES CTA — MICRO-INTERAÇÃO ─────────── */
-  const ctaButtons = document.querySelectorAll('.btn-cta');
-
-  ctaButtons.forEach(function (btn) {
     btn.addEventListener('click', function () {
-      // Pulso visual rápido
-      btn.style.transform = 'scale(0.97)';
-      setTimeout(function () {
-        btn.style.transform = '';
-      }, 140);
+      const isOpen = btn.getAttribute('aria-expanded') === 'true';
+
+      // Fecha todos os outros
+      items.forEach(function (other) {
+        const otherBtn    = other.querySelector('.faq-question');
+        const otherAnswer = other.querySelector('.faq-answer');
+        if (otherBtn && otherAnswer && other !== item) {
+          otherBtn.setAttribute('aria-expanded', 'false');
+          otherAnswer.classList.remove('open');
+        }
+      });
+
+      // Alterna o atual
+      if (isOpen) {
+        btn.setAttribute('aria-expanded', 'false');
+        answer.classList.remove('open');
+      } else {
+        btn.setAttribute('aria-expanded', 'true');
+        answer.classList.add('open');
+      }
     });
   });
+})();
 
 
-  /* ── 5. SCROLL REVEAL SUAVE ──────────────────── */
+/* ============================================
+   3. SCROLL FADE-IN ANIMATION
+   ============================================ */
+(function initScrollFade() {
+  // Adiciona classe fade-in nos elementos alvo
+  const targets = document.querySelectorAll(
+    '.step-card, .transformation-list li, .product-feature-card, ' +
+    '.access-step, .comparison-card, .faq-item, .transition-card, ' +
+    '.pricing-card, .guarantee-badge'
+  );
+
+  targets.forEach(function (el) {
+    el.classList.add('fade-in');
+  });
+
+  // IntersectionObserver para ativar quando visível
   if ('IntersectionObserver' in window) {
-    const revealEls = document.querySelectorAll(
-      '.step-card, .transformation-list li, .comparison-card, .faq-item, .access-step, .recap-item, .product-features li'
-    );
-
-    const revealObs = new IntersectionObserver(function (entries, observer) {
+    const observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
+          entry.target.classList.add('visible');
           observer.unobserve(entry.target);
         }
       });
     }, {
-      threshold: 0.08,
-      rootMargin: '0px 0px -30px 0px'
+      threshold: 0.12,
+      rootMargin: '0px 0px -40px 0px'
     });
 
-    revealEls.forEach(function (el, index) {
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(18px)';
-      el.style.transition = 'opacity 0.45s ease ' + (index % 4 * 0.07) + 's, transform 0.45s ease ' + (index % 4 * 0.07) + 's';
-      revealObs.observe(el);
+    targets.forEach(function (el) {
+      observer.observe(el);
     });
-  }
-
-
-  /* ── 6. BARRA DE PROVA SOCIAL — HIDE ON SCROLL DOWN ─ */
-  const socialBar = document.getElementById('social-proof-bar');
-  let lastScrollY = 0;
-  let barHidden = false;
-
-  window.addEventListener('scroll', function () {
-    const currentY = window.scrollY;
-    const scrollingDown = currentY > lastScrollY;
-
-    if (scrollingDown && currentY > 120 && !barHidden) {
-      socialBar.style.transform = 'translateY(-100%)';
-      socialBar.style.transition = 'transform 0.3s ease';
-      document.body.style.paddingTop = '0';
-      barHidden = true;
-    } else if (!scrollingDown && barHidden) {
-      socialBar.style.transform = 'translateY(0)';
-      document.body.style.paddingTop = socialBar.offsetHeight + 'px';
-      barHidden = false;
-    }
-
-    lastScrollY = currentY;
-  }, { passive: true });
-
-
-  /* ── 7. CONTADOR — OCULTAR TEMPORARIAMENTE APÓS CLIQUE ─ */
-  const onlineCounter = document.getElementById('online-counter');
-  if (onlineCounter) {
-    onlineCounter.addEventListener('click', function () {
-      onlineCounter.style.opacity = '0';
-      onlineCounter.style.transform = 'scale(0.9)';
-      onlineCounter.style.transition = 'all 0.2s ease';
-      setTimeout(function () {
-        onlineCounter.style.opacity = '1';
-        onlineCounter.style.transform = 'scale(1)';
-      }, 3000);
+  } else {
+    // Fallback para browsers sem suporte
+    targets.forEach(function (el) {
+      el.classList.add('visible');
     });
   }
+})();
 
+
+/* ============================================
+   4. SMOOTH SCROLL PARA LINKS DE ÂNCORA
+   ============================================ */
+(function initSmoothScroll() {
+  document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      const href = link.getAttribute('href');
+      if (href === '#') return;
+
+      const target = document.querySelector(href);
+      if (!target) return;
+
+      e.preventDefault();
+      const offset = 56; // altura da barra fixa
+      const top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+    });
+  });
+})();
+
+
+/* ============================================
+   5. HIGHLIGHT DE URGÊNCIA NO PREÇO
+      (pisca suavemente para criar senso de escassez)
+   ============================================ */
+(function initPriceHighlight() {
+  const priceEls = document.querySelectorAll('.pricing-value, .pricing-final-value');
+  let step = 0;
+
+  setInterval(function () {
+    priceEls.forEach(function (el) {
+      step++;
+      if (step % 2 === 0) {
+        el.style.transition = 'transform 0.2s ease';
+        el.style.transform = 'scale(1.04)';
+      } else {
+        el.style.transform = 'scale(1)';
+      }
+    });
+  }, 3500);
+})();
+
+
+/* ============================================
+   6. BARRA DE PROVA SOCIAL — micro-animação de entrada
+   ============================================ */
+(function initSocialBar() {
+  const bar = document.getElementById('socialProofBar');
+  if (!bar) return;
+
+  bar.style.opacity = '0';
+  bar.style.transform = 'translateY(-100%)';
+  bar.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      bar.style.opacity = '1';
+      bar.style.transform = 'translateY(0)';
+    });
+  });
+})();
+
+
+/* ============================================
+   7. STAGGERED ANIMATION para listas
+      (delay crescente nos itens visíveis)
+   ============================================ */
+(function initStagger() {
+  const lists = document.querySelectorAll('.transformation-list, .steps-list, .access-steps');
+
+  lists.forEach(function (list) {
+    const children = list.querySelectorAll('.fade-in');
+    children.forEach(function (child, i) {
+      child.style.transitionDelay = (i * 0.08) + 's';
+    });
+  });
 })();
